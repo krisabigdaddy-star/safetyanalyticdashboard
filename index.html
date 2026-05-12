@@ -56,7 +56,7 @@
         .dropdown-menu { max-height: 350px; overflow-y: auto; z-index: 100; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .desc-column { min-width: 350px; max-width: 600px; white-space: normal; line-height: 1.7; }
+        .desc-column { min-width: 350px; max-width: 600px; white-space: normal; line-height: 1.6; }
         .kpi-table th { font-size: 10px; padding: 6px; color: #94a3b8; text-transform: uppercase; }
         .kpi-table td { font-size: 12px; padding: 8px 6px; font-weight: 700; border-bottom: 1px solid #f8fafc; }
 
@@ -72,99 +72,55 @@
 
         #backToTop { position: fixed; bottom: 30px; right: 30px; display: none; z-index: 999; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 
-        /* --- HARDCORE PDF EXPORT FIXES --- */
+        /* --- PDF EXPORT FIXES --- */
         .pdf-header { display: none; }
         .pdf-hidden { display: none !important; }
         
         .pdf-mode {
             background: white !important;
-            width: 1122px !important; /* Perfect A4 Landscape Width */
+            width: 1200px !important; /* Fixed width to maintain aspect ratio and prevent clipping */
             margin: 0 auto !important;
             padding: 30px !important;
             box-sizing: border-box !important;
         }
 
-        /* 1. Prevent Grid Layouts from breaking page breaks */
-        .pdf-mode .grid {
-            display: block !important; 
-        }
-
-        /* 2. Absolute protection against cutting elements */
-        .pdf-avoid-break, 
         .pdf-mode .glass-card, 
         .pdf-mode .site-card,
         .pdf-mode .analysis-box {
-            display: block !important;
-            width: 100% !important;
-            margin-bottom: 30px !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
             box-shadow: none !important;
             border: 1px solid #cbd5e1 !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            margin-bottom: 25px !important;
             backdrop-filter: none !important;
         }
 
-        /* 3. Thai Typography Overlap Fix */
-        .pdf-mode .modern-table {
-            width: 100% !important;
-            table-layout: fixed !important;
-        }
-
-        .pdf-mode .modern-table tr {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            display: table-row !important;
-        }
-
-        .pdf-mode .modern-table td {
-            vertical-align: top !important;
-            border-bottom: 1px solid #e2e8f0 !important;
-            padding: 20px 10px !important; /* Force top/bottom breathing room */
-        }
-
-        .pdf-mode .pdf-thai-fix {
+        .pdf-mode .page-break {
+            page-break-before: always !important;
+            margin-top: 20px !important;
             display: block !important;
-            line-height: 2.2 !important; /* Extreme line-height to protect Thai vowels */
-            word-wrap: break-word !important;
-            white-space: pre-wrap !important;
-            font-size: 14px !important;
-            color: #1e293b !important;
-            padding: 5px 0 !important;
-        }
-
-        /* Force page breaks explicitly where needed */
-        .pdf-mode .page-break { 
-            page-break-before: always !important; 
-            margin-top: 20px !important; 
-            display: block !important; 
+            clear: both !important;
         }
     </style>
 </head>
 <body class="text-slate-900 font-sarabun selection:bg-emerald-100">
-
-    <!-- Loading Overlay for PDF Generation -->
-    <div id="pdfLoadingOverlay" class="hidden fixed inset-0 bg-white/95 z-[9999] flex-col items-center justify-center backdrop-blur-sm">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-emerald-500 border-opacity-50 mb-4"></div>
-        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">กำลังประมวลผล PDF</h2>
-        <p class="text-slate-500 mt-2">กรุณารอสักครู่ ระบบกำลังจัดหน้าเอกสารและแก้ไขสระภาษาไทย...</p>
-    </div>
 
     <!-- Floating Back to Top Button -->
     <button id="backToTop" class="no-print p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full transition-all transform hover:scale-110 active:scale-95 shadow-xl">
         <i data-lucide="chevron-up" size="24" stroke-width="3"></i>
     </button>
 
-    <div id="dashboardContent" class="min-h-screen p-4 md:p-8">
+    <div id="dashboardContent" class="min-h-screen p-4 md:p-10 bg-slate-50">
         
         <!-- PDF OFFICIAL HEADER (Visible only during PDF creation) -->
-        <div id="officialPdfHeader" class="pdf-header mb-8 border-b-4 border-emerald-500 pb-6 pdf-avoid-break">
+        <div id="officialPdfHeader" class="pdf-header mb-8 border-b-4 border-emerald-500 pb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-6">
                     <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center border-4 border-emerald-500">
                         <i data-lucide="plus" class="text-emerald-500 w-10 h-10" stroke-width="5"></i>
                     </div>
                     <div>
-                        <h1 id="pdfReportTitle" class="text-3xl font-black text-slate-800 uppercase tracking-tighter">VIVGROUP SAFETY REPORT</h1>
+                        <h1 id="pdfReportTitle" class="text-3xl font-black text-slate-800 uppercase tracking-tighter">VIVGROUP SAFETY SUMMARY REPORT</h1>
                         <p class="text-emerald-600 font-bold uppercase tracking-widest text-xs">Official Incident Analytic Record</p>
                     </div>
                 </div>
@@ -196,22 +152,19 @@
                     <div class="border-l-4 border-emerald-500/20 pl-6">
                         <h1 class="text-3xl md:text-5xl font-[900] text-slate-800 tracking-tighter uppercase leading-none mb-2">VIVGROUP<br><span class="text-emerald-600">SAFETY ANALYTIC</span></h1>
                         <p class="text-slate-400 font-semibold tracking-wide flex items-center gap-2">
-                             DASHBOARD <span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full uppercase">v8.0 PDF Fix</span>
+                             DASHBOARD <span class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full uppercase">v8.1 Export Engine</span>
                         </p>
                     </div>
                 </div>
                 
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="flex bg-white p-1 rounded-2xl shadow-xl border border-slate-100">
-                        <button onclick="exportToPDF(false)" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl transition-all font-bold text-xs shadow-md">
-                            <i data-lucide="file-text" size="16"></i> EXPORT SUMMARY
-                        </button>
-                        <button onclick="exportToPDF(true)" class="flex items-center gap-2 hover:bg-slate-100 text-slate-700 px-5 py-3 rounded-xl transition-all font-bold text-xs">
-                            <i data-lucide="file-stack" size="16"></i> FULL REPORT
+                        <button onclick="exportToPDF()" id="exportBtn" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all font-bold text-sm shadow-md">
+                            <i data-lucide="printer" size="18"></i> EXPORT DASHBOARD
                         </button>
                     </div>
 
-                    <label class="group relative flex items-center gap-3 bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-2xl shadow-xl transition-all cursor-pointer font-bold text-sm overflow-hidden">
+                    <label class="group relative flex items-center gap-3 bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-2xl shadow-xl transition-all cursor-pointer font-bold text-sm">
                         <i data-lucide="upload-cloud" size="20"></i>
                         <span>IMPORT DATA</span>
                         <input type="file" id="fileInput" class="hidden" accept=".xlsx, .xls, .csv">
@@ -233,7 +186,7 @@
                         <div id="dropYear" class="hidden absolute left-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl dropdown-menu custom-scrollbar p-4"></div>
                     </div>
                     <div class="relative dropdown-container">
-                        <button onclick="toggleDropdown('dropMonth')" class="flex items-center gap-3 bg-white px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold hover:border-emerald-500 transition-all shadow-sm min-w-[110px]">
+                        <button onclick="toggleDropdown('dropMonth')" class="flex items-center gap-3 bg-white px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-bold hover:border-emerald-500 transition-all shadow-sm min-w-[120px]">
                             <i data-lucide="clock" size="16" class="text-emerald-500"></i> <span id="labelMonth">Month</span>
                         </button>
                         <div id="dropMonth" class="hidden absolute left-0 mt-3 w-56 bg-white border border-slate-200 rounded-[1.5rem] shadow-2xl dropdown-menu custom-scrollbar p-4"></div>
@@ -272,12 +225,11 @@
                 <div class="h-10 w-2 bg-emerald-500 rounded-full"></div>
                 <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Site Performance Profiles</h2>
             </div>
-            <!-- Changing grid to block via CSS in PDF mode -->
             <div id="kpiGrid" class="grid grid-cols-1 gap-10"></div>
         </section>
 
         <!-- Executive AI Analysis -->
-        <section id="analysisSection" class="hidden mb-16 page-break pdf-avoid-break">
+        <section id="analysisSection" class="hidden mb-16 page-break">
             <div class="analysis-box p-8 md:p-12 rounded-[3.5rem] relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-10 opacity-10 rotate-12"><i data-lucide="brain-circuit" size="120" class="text-emerald-600"></i></div>
                 <div class="relative z-10">
@@ -285,7 +237,6 @@
                         <span class="px-4 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest">Executive Summary</span>
                         <h2 class="text-3xl font-[900] text-slate-800 uppercase tracking-tighter">AI Safety Intelligence</h2>
                     </div>
-                    <!-- Will stack in PDF mode automatically -->
                     <div id="dynamicAnalysisContent" class="grid grid-cols-1 lg:grid-cols-3 gap-10"></div>
                 </div>
             </div>
@@ -297,24 +248,23 @@
                 <div class="h-10 w-2 bg-emerald-500 rounded-full"></div>
                 <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Safety Architecture Analysis</h2>
             </div>
-            <!-- Grid turns to Block in PDF -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div class="glass-card pdf-avoid-break p-8 rounded-[3rem]">
+                <div class="glass-card p-8 rounded-[3rem]">
                     <h3 class="text-sm font-black text-slate-400 uppercase mb-8 tracking-widest text-center">Accident Nature</h3>
                     <div class="donut-container"><canvas id="acTypeDonut"></canvas></div>
                     <div id="acTypeInsight" class="insight-statement"></div>
                 </div>
-                <div class="glass-card pdf-avoid-break p-8 rounded-[3rem]">
+                <div class="glass-card p-8 rounded-[3rem]">
                     <h3 class="text-sm font-black text-slate-400 uppercase mb-8 tracking-widest text-center">Severity Criteria</h3>
                     <div class="donut-container"><canvas id="criteriaDonut"></canvas></div>
                     <div id="criteriaInsight" class="insight-statement"></div>
                 </div>
-                <div class="glass-card pdf-avoid-break p-8 rounded-[3rem]">
+                <div class="glass-card p-8 rounded-[3rem]">
                     <h3 class="text-sm font-black text-slate-400 uppercase mb-8 tracking-widest text-center">Root Cause Types</h3>
                     <div class="donut-container"><canvas id="causeTypeDonut"></canvas></div>
                     <div id="causeTypeInsight" class="insight-statement"></div>
                 </div>
-                <div class="glass-card pdf-avoid-break p-8 rounded-[3rem]">
+                <div class="glass-card p-8 rounded-[3rem]">
                     <h3 class="text-sm font-black text-slate-400 uppercase mb-8 tracking-widest text-center">Precise Cause Detail</h3>
                     <div class="donut-container"><canvas id="causeDetailDonut"></canvas></div>
                     <div id="causeDetailInsight" class="insight-statement"></div>
@@ -323,27 +273,25 @@
         </section>
 
         <!-- Charts Grid Section -->
-        <section id="statsSection" class="mb-16 page-break">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div class="glass-card pdf-avoid-break p-10 rounded-[3rem]">
-                    <h3 class="text-xl font-black text-slate-800 mb-8 flex items-center gap-3 uppercase">
-                        <i data-lucide="bar-chart" class="text-emerald-500"></i> Regional Comparison
-                    </h3>
-                    <div class="chart-container"><canvas id="siteChart"></canvas></div>
-                    <div id="siteChartInsight" class="insight-statement"></div>
-                </div>
-                <div class="glass-card pdf-avoid-break p-10 rounded-[3rem]">
-                    <h3 class="text-xl font-black text-slate-800 mb-8 flex items-center gap-3 uppercase">
-                        <i data-lucide="briefcase" class="text-emerald-500"></i> Department Intensity
-                    </h3>
-                    <div class="chart-container"><canvas id="deptChart"></canvas></div>
-                    <div id="deptChartInsight" class="insight-statement"></div>
-                </div>
+        <section id="statsSection" class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16 page-break">
+            <div class="glass-card p-10 rounded-[3rem]">
+                <h3 class="text-xl font-black text-slate-800 mb-8 flex items-center gap-3 uppercase">
+                    <i data-lucide="bar-chart" class="text-emerald-500"></i> Regional Comparison
+                </h3>
+                <div class="chart-container"><canvas id="siteChart"></canvas></div>
+                <div id="siteChartInsight" class="insight-statement"></div>
+            </div>
+            <div class="glass-card p-10 rounded-[3rem]">
+                <h3 class="text-xl font-black text-slate-800 mb-8 flex items-center gap-3 uppercase">
+                    <i data-lucide="briefcase" class="text-emerald-500"></i> Department Intensity
+                </h3>
+                <div class="chart-container"><canvas id="deptChart"></canvas></div>
+                <div id="deptChartInsight" class="insight-statement"></div>
             </div>
         </section>
 
         <!-- Trend Chart Section -->
-        <section id="trendSection" class="glass-card pdf-avoid-break p-10 rounded-[3rem] mb-16 page-break">
+        <section id="trendSection" class="glass-card p-10 rounded-[3rem] mb-16 page-break">
             <h3 class="text-xl font-black text-slate-800 mb-8 flex items-center gap-3 uppercase">
                 <i data-lucide="activity" class="text-emerald-500"></i> Safety Timeline Dynamics
             </h3>
@@ -351,8 +299,8 @@
             <div id="trendChartInsight" class="insight-statement"></div>
         </section>
 
-        <!-- Raw Log Archive Table -->
-        <section id="tableSection" class="glass-card rounded-[3rem] overflow-hidden mb-20 page-break">
+        <!-- Hidden Archive Table (Removed from PDF as per request) -->
+        <section id="tableSection" class="glass-card rounded-[3rem] overflow-hidden mb-20 no-print">
             <div class="p-8 border-b border-slate-100 flex items-center justify-between bg-white/50">
                 <h3 class="text-xl font-black text-slate-800 flex items-center gap-3 uppercase text-emerald-600">
                     <i data-lucide="database" class="text-slate-400"></i> Primary Incident Archive
@@ -399,74 +347,61 @@
         const btnTop = document.getElementById("backToTop");
         if(btnTop) btnTop.onclick = function() { window.scrollTo({top: 0, behavior: 'smooth'}); };
 
-        // --- THE ULTIMATE PDF EXPORT ENGINE ---
-        async function exportToPDF(isFull) {
+        // --- EXPORT TO PDF (HTML2PDF Fixes) ---
+        async function exportToPDF() {
             if (rawData.length === 0) return alert("กรุณานำเข้าข้อมูลก่อนทำการส่งออก");
             
+            const btn = document.getElementById('exportBtn');
             const element = document.getElementById('dashboardContent');
             const tableSection = document.getElementById('tableSection');
-            const overlay = document.getElementById('pdfLoadingOverlay');
             
-            // 1. Show Loading Overlay
-            if(overlay) {
-                overlay.classList.remove('hidden');
-                overlay.classList.add('flex');
-            }
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin"></i> GENERATING PDF...`;
+            lucide.createIcons();
+            
+            // Set PDF Context Strings
+            const exportDate = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            if(document.getElementById('pdfExportDate')) document.getElementById('pdfExportDate').innerText = exportDate;
+            
+            const timeDesc = (filters.years.length ? `Years: ${filters.years.join(', ')}` : 'Full History') + (filters.months.length ? ` | Months: ${filters.months.join(', ')}` : ' | All Months');
+            const scopeDesc = (filters.sites.length ? `Sites: ${filters.sites.join(', ')}` : 'Full Enterprise') + (filters.depts.length ? ` | Depts: ${filters.depts.join(', ')}` : '');
+            
+            if(document.getElementById('pdfFilterTime')) document.getElementById('pdfFilterTime').innerText = timeDesc;
+            if(document.getElementById('pdfFilterScope')) document.getElementById('pdfFilterScope').innerText = scopeDesc;
 
-            // Small delay to let UI render the loading screen
+            // Hide Table from PDF entirely as requested
+            if(tableSection) tableSection.classList.add('pdf-hidden');
+            element.classList.add('pdf-mode');
+
+            // Wait a moment for UI to reflect changes
             setTimeout(async () => {
+                const opt = {
+                    margin:       [0.4, 0.4],
+                    filename:     `VIVGROUP_Safety_Summary_${new Date().getTime()}.pdf`,
+                    image:        { type: 'jpeg', quality: 1.0 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        letterRendering: false, // Fixes horizontal text overlapping
+                        logging: false,
+                        windowWidth: 1200 // Fixed width to prevent clipping
+                    },
+                    jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
+                    pagebreak:    { mode: ['css', 'legacy'] }
+                };
+
                 try {
-                    // 2. Set PDF Context Strings
-                    const exportDate = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    if(document.getElementById('pdfExportDate')) document.getElementById('pdfExportDate').innerText = exportDate;
-                    if(document.getElementById('pdfReportTitle')) document.getElementById('pdfReportTitle').innerText = isFull ? "VIVGROUP SAFETY FULL AUDIT REPORT" : "VIVGROUP SAFETY ANALYTIC SUMMARY";
-                    
-                    const timeDesc = (filters.years.length ? `Years: ${filters.years.join(', ')}` : 'Full History') + (filters.months.length ? ` | Months: ${filters.months.join(', ')}` : ' | All Months');
-                    const scopeDesc = (filters.sites.length ? `Sites: ${filters.sites.join(', ')}` : 'Full Enterprise') + (filters.depts.length ? ` | Depts: ${filters.depts.join(', ')}` : '');
-                    
-                    if(document.getElementById('pdfFilterTime')) document.getElementById('pdfFilterTime').innerText = timeDesc;
-                    if(document.getElementById('pdfFilterScope')) document.getElementById('pdfFilterScope').innerText = scopeDesc;
-
-                    // 3. Hide Table if Summary Mode
-                    if (!isFull && tableSection) tableSection.classList.add('pdf-hidden');
-                    
-                    // 4. Activate PDF Mode CSS
-                    element.classList.add('pdf-mode');
-
-                    // 5. Configuration for A4 Landscape
-                    const opt = {
-                        margin:       [10, 10, 10, 10], // 10mm margins for safety
-                        filename:     `VIVGROUP_Safety_Report_${new Date().getTime()}.pdf`,
-                        image:        { type: 'jpeg', quality: 1.0 },
-                        html2canvas:  { 
-                            scale: 2, 
-                            useCORS: true, 
-                            letterRendering: true, 
-                            logging: false,
-                            windowWidth: 1122, // Strict A4 Landscape width
-                            scrollY: 0
-                        },
-                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
-                        pagebreak:    { mode: ['css', 'legacy'] }
-                    };
-
-                    // 6. Generate PDF
                     await html2pdf().set(opt).from(element).save();
-
                 } catch (error) {
                     console.error("PDF Export failed:", error);
                     alert("เกิดข้อผิดพลาดในการสร้าง PDF");
                 } finally {
-                    // 7. Cleanup & Restore UI
                     element.classList.remove('pdf-mode');
                     if(tableSection) tableSection.classList.remove('pdf-hidden');
-                    if(overlay) {
-                        overlay.classList.remove('flex');
-                        overlay.classList.add('hidden');
-                    }
+                    btn.innerHTML = originalText;
                     lucide.createIcons();
                 }
-            }, 150); 
+            }, 100);
         }
 
         function initDashboard(data) {
@@ -568,7 +503,7 @@
                 const worstYear = yearsInSite.length > 0 ? yearsInSite.reduce((a, b) => siteData.filter(d => String(d.year) === a).length > siteData.filter(d => String(d.year) === b).length ? a : b) : 'N/A';
 
                 const card = document.createElement('div');
-                card.className = "site-card pdf-avoid-break rounded-[3rem] flex flex-col shadow-lg mb-8";
+                card.className = "site-card rounded-[3rem] flex flex-col shadow-lg mb-4";
                 let subCardsHtml = '';
                 yearsInSite.forEach(year => {
                     const yData = siteData.filter(d => String(d.year) === year);
@@ -591,7 +526,7 @@
             const topSite = getTop('site'); const topDept = getTop('dept'); const topCause = getTop('causeDetail');
             const total = filteredData.length; const unsafeActCount = filteredData.filter(d => d.causeType === 'Unsafe Act').length;
             const unsafeActPct = ((unsafeActCount / total) * 100).toFixed(1);
-            contentDiv.innerHTML = `<div class="space-y-4"><div class="flex items-center gap-4 text-emerald-600"><i data-lucide="alert-circle" size="24"></i><h4 class="font-black uppercase text-sm tracking-widest">Risk Focus</h4></div><p class="text-slate-600 leading-relaxed font-medium text-sm text-justify">พบจุดวิกฤตที่ <span class="text-emerald-600 font-black underline underline-offset-4">${topSite}</span> และแผนก <span class="text-blue-600 font-black">${topDept}</span> ซึ่งต้องการการกำกับดูแลเป็นพิเศษ</p></div><div class="space-y-4"><div class="flex items-center gap-4 text-emerald-600"><i data-lucide="trending-up" size="24"></i><h4 class="font-black uppercase text-sm tracking-widest">Root Pattern</h4></div><p class="text-slate-600 leading-relaxed font-medium text-sm text-justify">สถิติอุบัติเหตุเกิดจาก <span class="font-black text-rose-800" style="color:#9f1239">Unsafe Act สูงถึง ${unsafeActPct}%</span> โดยสาเหตุหลักอันดับ 1 คือ <span class="text-emerald-700 font-black">"${topCause}"</span></p></div><div class="space-y-4"><div class="flex items-center gap-4 text-emerald-600"><i data-lucide="lightbulb" size="24"></i><h4 class="font-black uppercase text-sm tracking-widest">Suggestion</h4></div><p class="text-slate-600 leading-relaxed font-medium text-sm text-justify">แนะนำให้จัดทำแผน <span class="font-black text-slate-800">Safety Walk-Talk</span> และทบทวนมาตรการป้องกันหน้างานเพื่อลดชั่วโมงสูญเสีย</p></div>`;
+            contentDiv.innerHTML = `<div class="space-y-4"><div class="flex items-center gap-4 text-emerald-600"><i data-lucide="alert-circle" size="24"></i><h4 class="font-black uppercase text-sm tracking-widest">Risk Focus</h4></div><p class="text-slate-600 leading-relaxed font-medium text-sm text-justify">พบจุดวิกฤตที่ <span class="text-emerald-600 font-black underline underline-offset-4">${topSite}</span> และแผนก <span class="text-blue-600 font-black">${topDept}</span> ซึ่งต้องการการกำกับดูแลเป็นพิเศษ</p></div><div class="space-y-4"><div class="flex items-center gap-4 text-emerald-600"><i data-lucide="trending-up" size="24"></i><h4 class="font-black uppercase text-sm tracking-widest">Root Pattern</h4></div><p class="text-slate-600 leading-relaxed font-medium text-sm text-justify">สถิติอุบัติเหตุเกิดจาก <span class="font-black text-rose-900">Unsafe Act สูงถึง ${unsafeActPct}%</span> โดยสาเหตุหลักอันดับ 1 คือ <span class="text-emerald-700 font-black">"${topCause}"</span></p></div><div class="space-y-4"><div class="flex items-center gap-4 text-emerald-600"><i data-lucide="lightbulb" size="24"></i><h4 class="font-black uppercase text-sm tracking-widest">Suggestion</h4></div><p class="text-slate-600 leading-relaxed font-medium text-sm text-justify">แนะนำให้จัดทำแผน <span class="font-black text-slate-800">Safety Walk-Talk</span> และทบทวนมาตรการป้องกันหน้างานเพื่อลดชั่วโมงสูญเสีย</p></div>`;
             document.getElementById('analysisSection').classList.remove('hidden');
             lucide.createIcons();
         }
@@ -653,8 +588,8 @@
             const tbody = document.getElementById('tableBody'); if(!tbody) return; tbody.innerHTML = '';
             if (filteredData.length === 0) return;
             filteredData.slice(0, 100).forEach(row => {
-                const tr = document.createElement('tr'); tr.className = 'border-b border-slate-100 pdf-avoid-break';
-                tr.innerHTML = `<td class="px-6 py-6 text-[11px] font-extrabold text-slate-500 whitespace-nowrap">${row.date} ${row.month} ${row.year}</td><td class="px-6 py-6 text-xs font-black uppercase whitespace-nowrap text-slate-800">${row.site}</td><td class="px-6 py-6 text-[10px] whitespace-nowrap"><span class="px-3 py-1 bg-slate-900 text-white rounded-lg font-black uppercase">${row.dept}</span></td><td class="px-6 py-6 text-[10px] font-bold text-slate-500">${row.company}</td><td class="px-6 py-6 text-sm text-slate-700 desc-column"><div class="pdf-thai-fix"><div class="font-black text-[10px] text-emerald-600 mb-2 border-b border-emerald-100 pb-1 uppercase italic">${row.causeDetail}</div>${row.accDesc}</div></td>`;
+                const tr = document.createElement('tr'); tr.className = 'border-b border-slate-100';
+                tr.innerHTML = `<td class="px-6 py-6 text-[11px] font-extrabold text-slate-500 whitespace-nowrap">${row.date} ${row.month} ${row.year}</td><td class="px-6 py-6 text-xs font-black uppercase whitespace-nowrap text-slate-800">${row.site}</td><td class="px-6 py-6 text-[10px] whitespace-nowrap"><span class="px-3 py-1 bg-slate-900 text-white rounded-lg font-black uppercase">${row.dept}</span></td><td class="px-6 py-6 text-[10px] font-bold text-slate-500">${row.company}</td><td class="px-6 py-6 text-sm text-slate-700 desc-column"><div class="font-black text-[10px] text-emerald-600 mb-2 border-b border-emerald-100 pb-1 uppercase italic">${row.causeDetail}</div>${row.accDesc}</td>`;
                 tbody.appendChild(tr);
             });
             lucide.createIcons();
